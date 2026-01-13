@@ -6,19 +6,15 @@ namespace News.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ArticlesController : ControllerBase
+public class ArticleController(IArticleService articleService) : ControllerBase
 {
-    private readonly ArticleService _articleService;
-
-    public ArticlesController(ArticleService articleService) => _articleService = articleService;
-
     [HttpGet]
-    public async Task<List<Article>> Get() => await _articleService.GetAsync();
+    public async Task<List<Article>> Get() => await articleService.GetAsync();
 
     [HttpGet("{id:length(24)}")]
     public async Task<ActionResult<Article>> Get(string id)
     {
-        var book = await _articleService.GetAsync(id);
+        var book = await articleService.GetAsync(id);
 
         if (book is null)
         {
@@ -31,7 +27,7 @@ public class ArticlesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post(Article newArticle)
     {
-        await _articleService.CreateAsync(newArticle);
+        await articleService.CreateAsync(newArticle);
 
         return CreatedAtAction(nameof(Get), new { id = newArticle.Id }, newArticle);
     }
@@ -39,7 +35,7 @@ public class ArticlesController : ControllerBase
     [HttpPut("{id:length(24)}")]
     public async Task<IActionResult> Update(string id, Article updatedArticle)
     {
-        var book = await _articleService.GetAsync(id);
+        var book = await articleService.GetAsync(id);
 
         if (book is null)
         {
@@ -48,7 +44,7 @@ public class ArticlesController : ControllerBase
 
         updatedArticle.Id = book.Id;
 
-        await _articleService.UpdateAsync(id, updatedArticle);
+        await articleService.UpdateAsync(id, updatedArticle);
 
         return NoContent();
     }
@@ -56,14 +52,14 @@ public class ArticlesController : ControllerBase
     [HttpDelete("{id:length(24)}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var book = await _articleService.GetAsync(id);
+        var book = await articleService.GetAsync(id);
 
         if (book is null)
         {
             return NotFound();
         }
 
-        await _articleService.RemoveAsync(id);
+        await articleService.RemoveAsync(id);
 
         return NoContent();
     }

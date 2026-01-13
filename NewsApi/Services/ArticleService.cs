@@ -1,19 +1,11 @@
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using News.Models;
 
 namespace News.Services;
 
-public class ArticleService
+public class ArticleService : IArticleService
 {
-    public ArticleService(IOptions<NewsDBSettings> settings)
-    {
-        var connStr = settings.Value.ConnectionString;
-        var dbName = settings.Value.DatabaseName;
-        var collectionName = settings.Value.ArticlesCollectionName;
-        var db = new MongoClient(connStr).GetDatabase(dbName);
-        _collection = db.GetCollection<Article>(collectionName);
-    }
+    public ArticleService(IMongoCollection<Article> collection) => _collection = collection;
 
     public async Task<List<Article>> GetAsync()
     {
