@@ -6,7 +6,7 @@ namespace News.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ArticleController(IArticleService articleService) : ControllerBase
+public class ArticlesController(IArticleService articleService) : ControllerBase
 {
     [HttpGet]
     public async Task<List<Article>> Get() => await articleService.GetAsync();
@@ -14,14 +14,14 @@ public class ArticleController(IArticleService articleService) : ControllerBase
     [HttpGet("{id:length(24)}")]
     public async Task<ActionResult<Article>> Get(string id)
     {
-        var book = await articleService.GetAsync(id);
+        var article = await articleService.GetAsync(id);
 
-        if (book is null)
+        if (article is null)
         {
             return NotFound();
         }
 
-        return book;
+        return article;
     }
 
     [HttpPost]
@@ -35,14 +35,14 @@ public class ArticleController(IArticleService articleService) : ControllerBase
     [HttpPut("{id:length(24)}")]
     public async Task<IActionResult> Update(string id, Article updatedArticle)
     {
-        var book = await articleService.GetAsync(id);
+        var article = await articleService.GetAsync(id);
 
-        if (book is null)
+        if (article is null)
         {
             return NotFound();
         }
 
-        updatedArticle.Id = book.Id;
+        updatedArticle.Id = article.Id;
 
         await articleService.UpdateAsync(id, updatedArticle);
 
@@ -52,9 +52,9 @@ public class ArticleController(IArticleService articleService) : ControllerBase
     [HttpDelete("{id:length(24)}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var book = await articleService.GetAsync(id);
+        var article = await articleService.GetAsync(id);
 
-        if (book is null)
+        if (article is null)
         {
             return NotFound();
         }

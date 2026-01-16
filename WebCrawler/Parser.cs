@@ -1,10 +1,9 @@
 using HtmlAgilityPack;
-using News.Shared;
 using SmartReader;
 
 namespace News.WebCrawler;
 
-class Parser
+class Parser : IParser
 {
     public Parser()
     {
@@ -74,21 +73,22 @@ class Parser
         return list;
     }
 
-    public async Task<News.Shared.Article> ExtractArticle()
+    public async Task<ScrapedArticle> ExtractArticle()
     {
         var reader = new Reader(_currentUrl!.AbsoluteUri, HtmlStr);
-        var a = new News.Shared.Article();
         var extractedData = await reader.GetArticleAsync();
-        if (extractedData.IsReadable)
-        {
-            a.Title = extractedData.Title;
-            a.Body = extractedData.TextContent;
-            a.SiteName = extractedData.SiteName;
-            a.Url = _currentUrl.AbsoluteUri;
-            a.Author = extractedData.Author;
-            a.PublicationDate = extractedData.PublicationDate;
-        }
-        return a;
+
+        return extractedData.IsReadable
+            ? new ScrapedArticle
+            {
+                Title = extractedData.Title,
+                Body = extractedData.TextContent,
+                SiteName = extractedData.SiteName,
+                Url = _currentUrl.AbsoluteUri,
+                Author = extractedData.Author,
+                PublicationDate = extractedData.PublicationDate,
+            }
+            : new ScrapedArticle();
     }
 
     private HttpClient _client { get; init; }

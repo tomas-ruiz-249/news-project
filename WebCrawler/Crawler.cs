@@ -1,21 +1,22 @@
-using News.Models;
-
 namespace News.WebCrawler;
 
 class Crawler
 {
-    public Crawler()
+    public Crawler(IArticleApiClient client, IParser parser)
     {
-        _parser = new Parser();
+        _parser = parser;
         _urlQueue = [];
         _visitedUrls = [];
-        _articleRepo = new ArticleRepositoryMongo();
+        _apiClient = client;
     }
 
-    public async Task Crawl(Uri startUrl, int articleCount)
+    public async Task CrawlAsync(Uri startUrl, int articleCount)
     {
         _urlQueue.Enqueue(startUrl);
+
         var loadedArticleCount = 0;
+        var _skippedCount = 0;
+
         while (_urlQueue.Count > 0 && loadedArticleCount < articleCount)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
@@ -71,7 +72,7 @@ class Crawler
                     continue;
                 }
 
-                if (_articleRepo.StoreArticle(article))
+                if (await _apiClient.StoreArticle(article))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Stored Article Properly");
@@ -101,10 +102,8 @@ class Crawler
         Console.ForegroundColor = ConsoleColor.White;
     }
 
-    private readonly Parser _parser;
+    private readonly IParser _parser;
     private readonly Queue<Uri> _urlQueue;
     private readonly HashSet<Uri> _visitedUrls;
-    private readonly IArticleRepository _articleRepo;
-    private int _skippedCount = 0;
-    private const int _queueLimit = 30;
+    private readonly IArticleApiClient _apiClient;
 }
