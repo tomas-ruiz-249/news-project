@@ -1,27 +1,26 @@
 namespace News.WebCrawler;
 
-class Crawler
+class Crawler(IArticleApiClient client, IParser parser)
 {
-    public Crawler(IArticleApiClient client, IParser parser)
-    {
-        _parser = parser;
-        _urlQueue = [];
-        _visitedUrls = [];
-        _apiClient = client;
-    }
+    private readonly Queue<Uri> _urlQueue = [];
+    private readonly HashSet<Uri> _visitedUrls = [];
 
-    public async Task CrawlAsync(Uri startUrl, int articleCount)
+    public async Task CrawlAsync(Uri startUrl, int articleCount, CancellationToken stoppingToken)
     {
         _urlQueue.Enqueue(startUrl);
 
         var loadedArticleCount = 0;
-        var _skippedCount = 0;
+        var skippedCount = 0;
 
-        while (_urlQueue.Count > 0 && loadedArticleCount < articleCount)
+        while (
+            _urlQueue.Count > 0
+            && loadedArticleCount < articleCount
+            && !stoppingToken.IsCancellationRequested
+        )
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(
-                $"Queue: {_urlQueue.Count}, Visited: {_visitedUrls.Count}, Skipped: {_skippedCount}, Stored: {loadedArticleCount}"
+                $"Queue: {_urlQueue.Count}, Visited: {_visitedUrls.Count}, Skipped: {skippedCount}, Stored: {loadedArticleCount}"
             );
             Console.ForegroundColor = ConsoleColor.White;
 
@@ -31,17 +30,18 @@ class Crawler
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"ALREADY VISITED {currentUrl}, SKIPPING...");
                 Console.ForegroundColor = ConsoleColor.White;
-                _skippedCount++;
+                skippedCount++;
                 continue;
             }
 
-            if (await _parser.Parse(currentUrl))
+            var html = await client.GetHtmlFromUrl(currentUrl);
+            if (!string.IsNullOrEmpty(html))
             {
                 _visitedUrls.Add(currentUrl);
 
-                var extractArticleTask = _parser.ExtractArticle();
+                var parseArticleTask = parser.ParseAsync(html, currentUrl);
 
-                var urls = _parser.ExtractUrls();
+                var urls = parser.ExtractUrls(html, currentUrl);
                 foreach (var extractedUrl in urls)
                 {
                     if (
@@ -58,7 +58,7 @@ class Crawler
                 }
 
                 //extract article
-                var article = await extractArticleTask;
+                var article = await parseArticleTask;
                 Console.ForegroundColor = ConsoleColor.Blue;
                 Console.WriteLine(article);
                 Console.ForegroundColor = ConsoleColor.White;
@@ -72,7 +72,7 @@ class Crawler
                     continue;
                 }
 
-                if (await _apiClient.StoreArticle(article))
+                if (await client.StoreArticleAsync(article))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Stored Article Properly");
@@ -101,9 +101,4 @@ class Crawler
         Console.WriteLine($"Crawler stored {loadedArticleCount} Articles.");
         Console.ForegroundColor = ConsoleColor.White;
     }
-
-    private readonly IParser _parser;
-    private readonly Queue<Uri> _urlQueue;
-    private readonly HashSet<Uri> _visitedUrls;
-    private readonly IArticleApiClient _apiClient;
 }
