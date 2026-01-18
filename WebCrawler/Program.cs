@@ -1,6 +1,6 @@
-﻿using News.WebCrawler;
-
-var crawler = new Crawler();
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using News.WebCrawler;
 
 string[] urls =
 [
@@ -9,8 +9,22 @@ string[] urls =
     // "https://www.elpais.com.co/",
 ];
 
-const int articlesPerSource = 10;
-foreach (var url in urls)
+const string apiUrl = "http://localhost:5039/api/articles";
+
+var builder = Host.CreateApplicationBuilder(args);
+builder.Services.AddTransient<Crawler>();
+builder.Services.AddSingleton<IParser, Parser>();
+builder.Services.AddHttpClient<IArticleApiClient, ArticleApiClient>(
+    (sp, client) =>
+    {
+        client.BaseAddress = new Uri(apiUrl);
+    }
+);
+builder.Services.AddHostedService<CrawlerWorker>(sp =>
 {
-    await crawler.Crawl(new Uri(url), articlesPerSource);
-}
+    var crawler = sp.GetRequiredService<Crawler>();
+    return new CrawlerWorker(crawler, urls);
+});
+
+var host = builder.Build();
+await host.RunAsync();
