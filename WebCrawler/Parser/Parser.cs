@@ -1,12 +1,11 @@
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 using SmartReader;
 
 namespace News.WebCrawler;
 
-class Parser : IParser
+class Parser(ILogger<Parser> logger) : IParser
 {
-    public Parser() { }
-
     public async Task<ScrapedArticle> ParseAsync(string html, Uri current)
     {
         var reader = new Reader(current.AbsoluteUri, html);
@@ -55,9 +54,7 @@ class Parser : IParser
             }
             catch (System.Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(e.Message);
-                Console.ForegroundColor = ConsoleColor.White;
+                logger.LogError(e.Message);
             }
         }
         return list;

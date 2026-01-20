@@ -1,8 +1,9 @@
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 
 namespace News.WebCrawler;
 
-class ArticleApiClient(HttpClient client) : IArticleApiClient
+class ArticleApiClient(HttpClient client, ILogger<ArticleApiClient> logger) : IArticleApiClient
 {
     public async Task<bool> StoreArticleAsync(ScrapedArticle scrapedArticle)
     {
@@ -13,9 +14,7 @@ class ArticleApiClient(HttpClient client) : IArticleApiClient
         }
         catch (Exception e)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(e);
-            Console.BackgroundColor = ConsoleColor.White;
+            logger.LogError(e.Message);
             return false;
         }
     }
@@ -29,9 +28,7 @@ class ArticleApiClient(HttpClient client) : IArticleApiClient
         }
         catch (Exception e)
         {
-            Console.BackgroundColor = ConsoleColor.Red;
-            Console.WriteLine(e);
-            Console.BackgroundColor = ConsoleColor.White;
+            logger.LogError(e.Message);
         }
 
         return html;
