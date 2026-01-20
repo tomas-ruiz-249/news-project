@@ -12,7 +12,8 @@ string[] urls =
 const string apiUrl = "http://localhost:5039/api/articles";
 
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddTransient<Crawler>();
+
+builder.Services.AddScoped<Crawler>();
 builder.Services.AddSingleton<IParser, Parser>();
 builder.Services.AddHttpClient<IArticleApiClient, ArticleApiClient>(
     (sp, client) =>
@@ -22,8 +23,8 @@ builder.Services.AddHttpClient<IArticleApiClient, ArticleApiClient>(
 );
 builder.Services.AddHostedService<CrawlerWorker>(sp =>
 {
-    var crawler = sp.GetRequiredService<Crawler>();
-    return new CrawlerWorker(crawler, urls);
+    var scopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
+    return new CrawlerWorker(scopeFactory, urls);
 });
 
 var host = builder.Build();
