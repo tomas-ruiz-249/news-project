@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Logging;
+
 namespace News.WebCrawler;
 
-class Crawler(IArticleApiClient client, IParser parser)
+class Crawler(IArticleApiClient client, IParser parser, ILogger<Crawler> logger)
 {
     private readonly Queue<Uri> _urlQueue = [];
     private readonly HashSet<Uri> _visitedUrls = [];
@@ -18,18 +20,14 @@ class Crawler(IArticleApiClient client, IParser parser)
             && !stoppingToken.IsCancellationRequested
         )
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(
+            logger.LogInformation(
                 $"Queue: {_urlQueue.Count}, Visited: {_visitedUrls.Count}, Skipped: {skippedCount}, Stored: {loadedArticleCount}"
             );
-            Console.ForegroundColor = ConsoleColor.White;
 
             var currentUrl = _urlQueue.Dequeue();
             if (_visitedUrls.Contains(currentUrl))
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"ALREADY VISITED {currentUrl}, SKIPPING...");
-                Console.ForegroundColor = ConsoleColor.White;
+                logger.LogError("ALREADY VISITED {currentUrl}, SKIPPING...", currentUrl);
                 skippedCount++;
                 continue;
             }
@@ -59,46 +57,35 @@ class Crawler(IArticleApiClient client, IParser parser)
 
                 //extract article
                 var article = await parseArticleTask;
-                Console.ForegroundColor = ConsoleColor.Blue;
-                Console.WriteLine(article);
-                Console.ForegroundColor = ConsoleColor.White;
+                logger.LogInformation("{article}", article);
 
                 //store article
                 if (article.Body == null || article.Body.Length < 300)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Article body null or too short");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    logger.LogError("Article body null or too short");
                     continue;
                 }
 
                 if (await client.StoreArticleAsync(article))
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Stored Article Properly");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    logger.LogInformation("Stored Article Properly");
                     loadedArticleCount++;
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Error storing article");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    logger.LogError("Error storing article");
                 }
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(
-                    "Could not obtain HTML for the given url: " + startUrl.AbsoluteUri
+                logger.LogError(
+                    "Could not obtain HTML for the given url: {AbsoluteUri}",
+                    startUrl.AbsoluteUri
                 );
-                Console.ForegroundColor = ConsoleColor.White;
             }
         }
         _urlQueue.Clear();
         _visitedUrls.Clear();
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"Crawler stored {loadedArticleCount} Articles.");
-        Console.ForegroundColor = ConsoleColor.White;
+        logger.LogInformation("Crawler stored {loadedArticleCount} Articles.", loadedArticleCount);
     }
 }

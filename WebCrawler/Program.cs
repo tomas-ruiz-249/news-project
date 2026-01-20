@@ -29,3 +29,4 @@ builder.Services.AddHostedService<CrawlerWorker>(sp =>
 
 var host = builder.Build();
 await host.RunAsync();
+await host.StopAsync();
