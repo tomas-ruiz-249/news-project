@@ -20,7 +20,7 @@ class ScrapedArticle
     public string? SiteName { get; set; } = null;
 
     [JsonRequired]
-    public string Url { get; set; }
+    public string Url { get; set; } = string.Empty;
 
     public string? Author { get; set; } = null;
     public DateTime? PublicationDate { get; set; } = null;
