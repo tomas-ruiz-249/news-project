@@ -1,7 +1,14 @@
-from textual.app import App, ComposeResult
-from textual.widgets import Collapsible, Header, Label
-
 from api_service import ApiService
+from textual.app import App, ComposeResult
+from textual.widgets import (
+    Collapsible,
+    Footer,
+    Header,
+    LoadingIndicator,
+    Static,
+    TabPane,
+    TabbedContent,
+)
 
 
 class Client(App):
@@ -12,10 +19,24 @@ class Client(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
+        yield LoadingIndicator()
+        yield TabbedContent()
+        yield Footer()
+
+    async def on_mount(self) -> None:
+        await self.fetch_content()
+        self.query_one(LoadingIndicator).remove()
+
+    async def fetch_content(self):
         articles = self.api.get_articles()
-        for a in articles:
-            with Collapsible(title=a["title"]):
-                yield Label(a["body"])
+        sites = set([a["siteName"] for a in articles])
+        tabbed = self.query_one(TabbedContent)
+        for s in sites:
+            site_articles = [a for a in articles if a["siteName"] == s]
+            collapsibles = [
+                Collapsible(Static(a["body"]), title=a["title"]) for a in site_articles
+            ]
+            await tabbed.add_pane(TabPane(s, *collapsibles))
 
     def on_button_pressed(self) -> None:
         self.exit()

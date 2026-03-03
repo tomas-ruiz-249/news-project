@@ -13,4 +13,4 @@ class ApiService:
             articles = json.loads(response.text)
             return articles
         else:
-            raise Exception("equisde")
+            raise Exception("HTTP ERROR")
