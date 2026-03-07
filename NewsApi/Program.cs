@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using News.Models;
+using News.Repositories;
 using News.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,20 +9,21 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.Configure<NewsDBSettings>(builder.Configuration.GetSection("NewsDatabase"));
 builder.Services.AddScoped<IArticleService, ArticleService>();
+builder.Services.AddScoped<IArticleRepository, ArticleRepositoryMongo>();
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
     var settings = sp.GetRequiredService<IOptions<NewsDBSettings>>().Value;
     return new MongoClient(settings.ConnectionString);
 });
 
-builder.Services.AddScoped<IMongoDatabase>(sp =>
+builder.Services.AddSingleton<IMongoDatabase>(sp =>
 {
     var settings = sp.GetRequiredService<IOptions<NewsDBSettings>>().Value;
     var client = sp.GetRequiredService<IMongoClient>();
     return client.GetDatabase(settings.DatabaseName);
 });
 
-builder.Services.AddScoped<IMongoCollection<Article>>(sp =>
+builder.Services.AddSingleton<IMongoCollection<Article>>(sp =>
 {
     var settings = sp.GetRequiredService<IOptions<NewsDBSettings>>().Value;
     var db = sp.GetRequiredService<IMongoDatabase>();
