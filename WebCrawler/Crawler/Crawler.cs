@@ -25,6 +25,8 @@ class Crawler(IArticleApiClient client, IParser parser, ILogger<Crawler> logger)
             );
 
             var currentUrl = _urlQueue.Dequeue();
+            logger.LogInformation($"currentUrl: {currentUrl}");
+
             if (_visitedUrls.Contains(currentUrl))
             {
                 logger.LogError("ALREADY VISITED {currentUrl}, SKIPPING...", currentUrl);

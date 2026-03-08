@@ -4,7 +4,10 @@ namespace News.WebCrawler;
 
 class ScrapedArticle
 {
-    public ScrapedArticle() { }
+    public ScrapedArticle()
+    {
+        ExtractionDate = DateTime.Now;
+    }
 
     public ScrapedArticle(string? title, string? body, string? siteName, string url, string? author)
     {
@@ -13,6 +16,7 @@ class ScrapedArticle
         SiteName = siteName;
         Url = url;
         Author = author;
+        ExtractionDate = DateTime.Now;
     }
 
     public string? Title { get; set; } = null;
@@ -29,13 +33,13 @@ class ScrapedArticle
     public override string ToString()
     {
         return $"""
-            Author: {Author}
-            Title: {Title}
-            Body: {Body}
-            SiteName: {SiteName}
-            Url: {Url}
-            PublicationDate: {PublicationDate}
-            ExtractionDate: {ExtractionDate}
+            [Author]: {Author}
+            [Title]: {Title}
+            [Body]: {Body}
+            [SiteName]: {SiteName}
+            [Url]: {Url}
+            [PublicationDate]: {PublicationDate}
+            [ExtractionDate]: {ExtractionDate}
             """;
     }
 }

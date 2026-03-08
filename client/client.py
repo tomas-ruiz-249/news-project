@@ -34,7 +34,13 @@ class Client(App):
         for s in sites:
             site_articles = [a for a in articles if a["siteName"] == s]
             collapsibles = [
-                Collapsible(Static(a["body"]), title=a["title"]) for a in site_articles
+                Collapsible(
+                    Static(
+                        a["author"] + " " + str(a["publicationDate"]) + " " + a["body"]
+                    ),
+                    title=a["title"],
+                )
+                for a in site_articles
             ]
             await tabbed.add_pane(TabPane(s, *collapsibles))
 

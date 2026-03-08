@@ -15,9 +15,10 @@ public class ArticleService(IArticleRepository repo) : IArticleService
         return await repo.GetAsync(id);
     }
 
-    public async Task CreateAsync(Article a)
+    public async Task<bool> CreateAsync(Article a)
     {
-        await repo.CreateAsync(a);
+        var success = await repo.CreateAsync(a);
+        return success;
     }
 
     public async Task UpdateAsync(string id, Article newArticle)

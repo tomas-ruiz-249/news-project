@@ -12,7 +12,7 @@ class CrawlerWorker(IServiceScopeFactory scopeFactory, string[] urls) : Backgrou
 
     private async Task CrawlListAsync(string[] urls, CancellationToken stoppingToken)
     {
-        const int articlesPerSource = 10;
+        const int articlesPerSource = 15;
         foreach (var url in urls)
         {
             using var scope = scopeFactory.CreateScope();

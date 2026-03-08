@@ -3,11 +3,28 @@ using News.Models;
 
 namespace News.Repositories;
 
-public class ArticleRepositoryMongo(IMongoCollection<Article> collection) : IArticleRepository
+public class ArticleRepositoryMongo(
+    IMongoCollection<Article> collection,
+    ILogger<ArticleRepositoryMongo> logger
+) : IArticleRepository
 {
-    public async Task CreateAsync(Article a)
+    public async Task<bool> CreateAsync(Article a)
     {
-        await collection.InsertOneAsync(a);
+        try
+        {
+            await collection.InsertOneAsync(a);
+            return true;
+        }
+        catch (MongoWriteException e)
+        {
+            logger.LogError(e.Message);
+            return false;
+        }
+        catch (MongoException e)
+        {
+            logger.LogError(e.Message);
+            return false;
+        }
     }
 
     public async Task<List<Article>> GetAsync()

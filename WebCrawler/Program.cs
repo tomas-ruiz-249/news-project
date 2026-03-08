@@ -2,12 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using News.WebCrawler;
 
-string[] urls =
-[
-    "https://www.elespectador.com/",
-    // "https://www.eltiempo.com/",
-    // "https://www.elpais.com.co/",
-];
+string[] urls = ["https://www.elespectador.com/"];
 
 const string apiUrl = "http://localhost:5039/api/articles";
 

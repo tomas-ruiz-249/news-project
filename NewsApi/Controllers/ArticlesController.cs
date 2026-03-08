@@ -27,8 +27,11 @@ public class ArticlesController(IArticleService articleService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post(Article newArticle)
     {
-        await articleService.CreateAsync(newArticle);
-
+        var success = await articleService.CreateAsync(newArticle);
+        if (!success)
+        {
+            return Conflict();
+        }
         return CreatedAtAction(nameof(Get), new { id = newArticle.Id }, newArticle);
     }
 
