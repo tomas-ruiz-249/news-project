@@ -4,11 +4,15 @@ from textual.widgets import (
     Collapsible,
     Footer,
     Header,
-    LoadingIndicator,
-    Static,
     TabPane,
     TabbedContent,
+    Markdown,
 )
+from datetime import datetime
+
+import locale
+
+locale.setlocale(locale.LC_TIME, "es_CO.UTF-8")
 
 
 class Client(App):
@@ -19,30 +23,53 @@ class Client(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield LoadingIndicator()
         yield TabbedContent()
         yield Footer()
 
-    async def on_mount(self) -> None:
-        await self.fetch_content()
-        self.query_one(LoadingIndicator).remove()
-
-    async def fetch_content(self):
-        articles = self.api.get_articles()
-        sites = set([a["siteName"] for a in articles])
+    def on_mount(self) -> None:
         tabbed = self.query_one(TabbedContent)
-        for s in sites:
-            site_articles = [a for a in articles if a["siteName"] == s]
-            collapsibles = [
-                Collapsible(
-                    Static(
-                        a["author"] + " " + str(a["publicationDate"]) + " " + a["body"]
-                    ),
-                    title=a["title"],
+        tabbed.loading = True
+        self.run_worker(self.load_data(tabbed), exclusive=True)
+
+    async def load_data(self, tabbed) -> None:
+        self.articles = await self.api.get_articles()
+        self.sites = set([a["siteName"] for a in self.articles])
+
+        for s in self.sites:
+            site_articles = [a for a in self.articles if a["siteName"] == s]
+            collapsibles = []
+            for a in site_articles:
+                collapsibles.append(
+                    Collapsible(
+                        title=a["title"],
+                        id="article" + a["id"],
+                    )
                 )
-                for a in site_articles
-            ]
-            await tabbed.add_pane(TabPane(s, *collapsibles))
+
+            tabbed.add_pane(TabPane(s, *collapsibles))
+        tabbed.loading = False
+
+    async def on_collapsible_expanded(self, event: Collapsible.Toggled):
+        if event.collapsible.collapsed:
+            return
+        if event.collapsible.query(Markdown):
+            return
+        id = str(event.collapsible.id).replace("article", "")
+        articles = [a for a in self.articles if a["id"] == id]
+        for a in articles:
+            markdown_widget = Markdown(
+                f"# {a["title"]}\n"
+                + f"# [Ver original]({a["url"]})\n\n"
+                + f"## Por: {a["author"]}\n"
+                + f"## Publicado en: {
+                    datetime.fromisoformat(a["publicationDate"]).strftime("%d %B %Y, %I:%M %p")
+                    }\n"
+                + f"## Extraido en: {
+                    datetime.fromisoformat(a["extractionDate"]).strftime("%d %B %Y, %I:%M %p")
+                }\n"
+                + f"<p>{a["body"]}<p>"
+            )
+            await event.collapsible.query_one("Contents").mount(markdown_widget)
 
     def on_button_pressed(self) -> None:
         self.exit()
